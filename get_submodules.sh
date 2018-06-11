@@ -19,6 +19,7 @@ echo "$SSH_PRIVATE_KEY" | ssh-add -
 mkdir -p ~/.ssh
 echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
+git config --global submodule.fetchJobs 10
 git submodule update --init
 git submodule sync --recursive
 git submodule update --init --recursive
