@@ -3,29 +3,29 @@
 import subprocess
 import os
 
-def getMdFormattedChangelog(newCommit, oldCommit) : 
+def get_md_formatted_changelog(new_commit, old_commit) : 
     #saving parameters this way to make sure that they are read properly on bash command
     get_log_format = '%x1f'.join(['%b', '%h']) + '%x1e'
-    bashCommand = 'git --no-pager --git-dir=.git log --first-parent --format="%s"' % get_log_format   + " "+ newCommit+"..." + oldCommit
+    bash_command = 'git --no-pager --git-dir=.git log --first-parent --format="%s"' % get_log_format   + " "+ new_commit+"..." + old_commit
     #getting raw changelog from git
-    rawChangelog = sendCommand(bashCommand).replace("\"", "")
-    return  ConvertChangelogTextToMd(rawChangelog, None)
+    raw_changelog = send_command(bash_command).replace("\"", "")
+    return  convert_changelog_text_to_md(raw_changelog, None)
 
-def buildCommandForTagNotes(reqType, cleanChangeLog, tag) : 
-    formattedProjectPath = os.environ['CI_PROJECT_PATH'].replace("/","%2F")  
-    return 'curl  -X '+reqType+'  --header "PRIVATE-TOKEN: $GITLAB_API_PRIVATE_TOKEN" -d description="'+cleanChangeLog+ '" https://git.smarpsocial.com/api/v4/projects/"'+ formattedProjectPath+ '"/repository/tags/"'+tag+'"/release'
+def build_command_for_tag_notes(reqType, clean_changelog, tag) : 
+    formatted_project_path = os.environ['CI_PROJECT_PATH'].replace("/","%2F")  
+    return 'curl  -X '+reqType+'  --header "PRIVATE-TOKEN: $GITLAB_API_PRIVATE_TOKEN" -d description="'+clean_changelog+ '" https://git.smarpsocial.com/api/v4/projects/"'+ formatted_project_path+ '"/repository/tags/"'+tag+'"/release'
      
-def putTagNotesOnGitlab( cleanChangeLog  , tag):
+def put_tag_notes_on_gitlab( clean_changelog  , tag):
     # create a release notes just in case it hasnt'been created before
-    k = os.system(buildCommandForTagNotes("POST", cleanChangeLog, tag))
+    k = os.system(build_command_for_tag_notes("POST", clean_changelog, tag))
     # updating just in case it had been created before
-    k = os.system(buildCommandForTagNotes("PUT", cleanChangeLog, tag))
+    k = os.system(build_command_for_tag_notes("PUT", clean_changelog, tag))
     print "\n"
 
-def sendCommand( bashCommand ):
+def send_command( bash_command ):
     """Sends command to system.
     """
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     if error is not None :
         print(error)
@@ -33,15 +33,15 @@ def sendCommand( bashCommand ):
         quit()
     return output.strip('\n')
 
-def getCommitByTag( tag ):
-    return  sendCommand("git rev-list -n 1 " +  tag)
+def get_commit_by_tag( tag ):
+    return  send_command("git rev-list -n 1 " +  tag)
 
-def parseRawChangelog(nonFormattedText ) :
+def parse_raw_changelog(non_formatted_text ) :
     """Parses raw changelog extracted from git.
      Returns map {'issue_type': ['issues_array']}
     """
-    mappedIssues = {}
-    for line in nonFormattedText.splitlines() :
+    mapped_issues = {}
+    for line in non_formatted_text.splitlines() :
         #skipping empty lines, non related to issues description lines, etc...
         if line == "" :
             continue
@@ -49,70 +49,69 @@ def parseRawChangelog(nonFormattedText ) :
             continue
         if len(line)<=11 and not " " in line:
             continue
-        categorizedIssue = False
-        for issueType in issueTypes:
-            issuePrefix = issueType + ": "
+        categorized_issue = False
+        for issue_type in issue_types:
+            issue_prefix = issue_type + ": "
             #checking lower cased strings to prevent skipping misnamed issues
-            if line.lower().startswith(issuePrefix.lower()) :
-                categorizedIssue = True
-                line = line.replace(issuePrefix, "")
-                if issueType not in mappedIssues :
-                    mappedIssues.update({issueType : [line]})
+            if line.lower().startswith(issue_prefix.lower()) :
+                categorized_issue = True
+                line = line.replace(issue_prefix, "")
+                if issue_type not in mapped_issues :
+                    mapped_issues.update({issue_type : [line]})
                 else:
-                    mappedIssues[issueType].append(line)
+                    mapped_issues[issue_type].append(line)
                 break
-        if categorizedIssue :
+        if categorized_issue :
             continue
-        #if code reach that line - means issue type is not in issueTypes -> typo or uncategorized issuetype
-        if uncategorizedIssueType not in mappedIssues :
-            mappedIssues.update({uncategorizedIssueType : [line]})
+        #if code reach that line - means issue type is not in issue_types -> typo or uncategorized issuetype
+        if uncategorized_issueType not in mapped_issues :
+            mapped_issues.update({uncategorized_issueType : [line]})
         else:
-            mappedIssues[uncategorizedIssueType].append(line)
+            mapped_issues[uncategorized_issueType].append(line)
         continue      
-    return mappedIssues
+    return mapped_issues
 
-lineBreaker = "\n"
-notEnoughInputParametersErr = "Not enough input parameters"
-issueTypes = {"Enhancement","Fix", "Feature", "Ongoing", "Checkmark",
+line_breaker = "\n"
+issue_types = {"Enhancement","Fix", "Feature", "Ongoing", "Checkmark",
 "Related", "Lab", "Live", "Refactor", "Nochangelog", "Technical"}
 
-uncategorizedIssueType = "Uncategorized"
+uncategorized_issueType = "Uncategorized"
 
-def ConvertChangelogTextToMd(nonFormattedText , header ) : 
+def convert_changelog_text_to_md(non_formatted_text , header ) : 
     """Returns .MD formatted changelog based on raw formatted text.
      Header - 'title' for set of issues in that changelog
     """
-    mappedIssues = parseRawChangelog(nonFormattedText)
-    if len(mappedIssues) == 0 :
+    mapped_issues = parse_raw_changelog(non_formatted_text)
+    if len(mapped_issues) == 0 :
         return ""
     res = ""
     if not (not header or header == ""):
-      res += buildHeaderProject(header) + lineBreaker
-    res += buildChangelogBody(mappedIssues)
+      res += build_header_project(header) + line_breaker
+    res += build_changelog_body(mapped_issues)
     return res
 
-def buildHeaderProject(header )  :
-	return "## " + header + lineBreaker
+def build_header_project(header )  :
+	return "## " + header + line_breaker
 
-def buildHeaderIssue(header )  :
-	return "### " + header + ":" + lineBreaker
+def build_header_issue(header )  :
+	return "### " + header + ":" + line_breaker
 
-def buildIssue(issue ) :
+def build_issue(issue ) :
 	return " - " + issue
 
-def buildChangelogBody(mappedIssues)  :
+def build_changelog_body(mapped_issues)  :
 	res = ""
-	for issueType  in  mappedIssues :
-		res += buildHeaderIssue(issueType)
-		for issue in mappedIssues[issueType] :
-			res += buildIssue(issue) + lineBreaker
-		res += lineBreaker
+	for issue_type  in  mapped_issues :
+		res += build_header_issue(issue_type)
+		for issue in mapped_issues[issue_type] :
+			res += build_issue(issue) + line_breaker
+		res += line_breaker
 	return res
 
-def buildMessageToSlack(tag) :
+def build_message_to_slack(tag) :
     return os.environ['CI_PROJECT_URL']  + "/tags/" + tag
 
-def sendMessageToSlack(text, channel, token, username) :
+def send_message_to_slack(text, channel, token, username) :
     """Sends message to slack
         text - text to be send
         channel - channel name at slack. example: #general
@@ -124,21 +123,22 @@ def sendMessageToSlack(text, channel, token, username) :
     os.system(command)
 
 def main():
-    newCommit = os.environ['CI_COMMIT_SHA']
-    oldCommit = ""
+    new_commit = os.environ['CI_COMMIT_SHA']
+    old_commit = ""
     if "CI_BUILD_TAG" in os.environ:
-        newTag = os.environ["CI_BUILD_TAG"]
-        oldCommit = getCommitByTag(sendCommand("git describe --abbrev=0 --tags "+ newTag +"^"))
+        print 'there is a tag'
+        new_tag = os.environ["CI_BUILD_TAG"]
+        old_commit = get_commit_by_tag(send_command("git describe --abbrev=0 --tags "+ new_tag +"^"))
     else :
-        oldCommit = getCommitByTag(sendCommand("git describe --abbrev=0 --tags"))
+        old_commit = get_commit_by_tag(send_command("git describe --abbrev=0 --tags"))
 
-    mdFormattedChangelog = getMdFormattedChangelog(newCommit, oldCommit)
+    md_formatted_changelog = get_md_formatted_changelog(new_commit, old_commit)
 
-    print( mdFormattedChangelog)
-
+    print( md_formatted_changelog)
+    return
     if "CI_BUILD_TAG" in os.environ:
-        putTagNotesOnGitlab(mdFormattedChangelog, newTag)
-        sendMessageToSlack(buildMessageToSlack(newTag), os.environ['ANNOUNCEMENT_CHANNEL'], os.environ['SLACK_BOT_TOKEN'], os.environ['GITLAB_USER_NAME'] )
+        put_tag_notes_on_gitlab(md_formatted_changelog, new_tag)
+        send_message_to_slack(build_message_to_slack(new_tag), os.environ['ANNOUNCEMENT_CHANNEL'], os.environ['SLACK_BOT_TOKEN'], os.environ['GITLAB_USER_NAME'] )
     
 if __name__ == "__main__":
     main()
