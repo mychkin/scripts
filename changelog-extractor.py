@@ -8,7 +8,7 @@ def get_md_formatted_changelog(new_commit, old_commit) :
     get_log_format = '%x1f'.join(['%b', '%h']) + '%x1e'
     bash_command = 'git --no-pager --git-dir=.git log --first-parent --format="%s"' % get_log_format   + " "+ new_commit+"..." + old_commit
     #getting raw changelog from git
-    raw_changelog = send_command(bash_command).replace("\"", "")
+    raw_changelog = run_command(bash_command).replace("\"", "")
     return  convert_changelog_text_to_md(raw_changelog, None)
 
 def build_command_for_tag_notes(reqType, clean_changelog, tag) : 
@@ -22,7 +22,7 @@ def put_tag_notes_on_gitlab( clean_changelog  , tag):
     k = os.system(build_command_for_tag_notes("PUT", clean_changelog, tag))
     print "\n"
 
-def send_command( bash_command ):
+def run_command( bash_command ):
     """Sends command to system.
     """
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
@@ -34,7 +34,7 @@ def send_command( bash_command ):
     return output.strip('\n')
 
 def get_commit_by_tag( tag ):
-    return  send_command("git rev-list -n 1 " +  tag)
+    return  run_command("git rev-list -n 1 " +  tag)
 
 def parse_raw_changelog(non_formatted_text ) :
     """Parses raw changelog extracted from git.
@@ -128,9 +128,9 @@ def main():
     if "CI_BUILD_TAG" in os.environ:
         print 'there is a tag'
         new_tag = os.environ["CI_BUILD_TAG"]
-        old_commit = get_commit_by_tag(send_command("git describe --abbrev=0 --tags "+ new_tag +"^"))
+        old_commit = get_commit_by_tag(run_command("git describe --abbrev=0 --tags "+ new_tag +"^"))
     else :
-        old_commit = get_commit_by_tag(send_command("git describe --abbrev=0 --tags"))
+        old_commit = get_commit_by_tag(run_command("git describe --abbrev=0 --tags"))
 
     md_formatted_changelog = get_md_formatted_changelog(new_commit, old_commit)
 
