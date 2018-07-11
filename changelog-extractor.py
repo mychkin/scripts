@@ -53,7 +53,7 @@ def parse_raw_changelog(non_formatted_text ) :
         for issue_type in issue_types:
             issue_prefix = issue_type + ": "
             #checking lower cased strings to prevent skipping misnamed issues
-            if line.lower().startswith(issue_prefix.lower()) :
+            if line.strip(" ").lower().startswith(issue_prefix.lower()) :
                 categorized_issue = True
                 line = line.replace(issue_prefix, "")
                 if issue_type not in mapped_issues :
