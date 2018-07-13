@@ -91,7 +91,7 @@ def convert_changelog_text_to_md(non_formatted_text , header ) :
     return res
 
 def build_header_project(header )  :
-	return "## " + header + line_breaker
+return "## " + header + line_breaker
 
 def build_header_issue(header )  :
 	return "### " + header + ":" + line_breaker
@@ -100,13 +100,13 @@ def build_issue(issue ) :
 	return " - " + issue
 
 def build_changelog_body(mapped_issues)  :
-	res = ""
-	for issue_type  in  mapped_issues :
-		res += build_header_issue(issue_type)
-		for issue in mapped_issues[issue_type] :
-			res += build_issue(issue) + line_breaker
-		res += line_breaker
-	return res
+    res = ""
+    for issue_type  in  mapped_issues :
+        res += build_header_issue(issue_type)
+        for issue in mapped_issues[issue_type] :
+            res += build_issue(issue) + line_breaker
+        res += line_breaker
+    return res
 
 def build_message_to_slack(tag) :
     return os.environ['CI_PROJECT_URL']  + "/tags/" + tag
