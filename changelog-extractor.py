@@ -91,13 +91,13 @@ def convert_changelog_text_to_md(non_formatted_text , header ) :
     return res
 
 def build_header_project(header )  :
-return "## " + header + line_breaker
+    return "## " + header + line_breaker
 
 def build_header_issue(header )  :
-	return "### " + header + ":" + line_breaker
+    return "### " + header + ":" + line_breaker
 
 def build_issue(issue ) :
-	return " - " + issue
+    return " - " + issue
 
 def build_changelog_body(mapped_issues)  :
     res = ""
