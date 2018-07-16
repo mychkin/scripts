@@ -135,7 +135,6 @@ def main():
     md_formatted_changelog = get_md_formatted_changelog(new_commit, old_commit)
 
     print( md_formatted_changelog)
-    return
     if "CI_BUILD_TAG" in os.environ:
         put_tag_notes_on_gitlab(md_formatted_changelog, new_tag)
         send_message_to_slack(build_message_to_slack(new_tag), os.environ['ANNOUNCEMENT_CHANNEL'], os.environ['SLACK_BOT_TOKEN'], os.environ['GITLAB_USER_NAME'] )
